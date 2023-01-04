@@ -1,0 +1,19 @@
+[package]
+name = "gset"
+version = "0.0.1"
+authors = ["Andrew Sonin <sonin.cel@yandex.ru>"]
+description = "A procedural macro for generating the most basic getters and setters on fields."
+categories = ["development-tools::procedural-macro-helpers"]
+keywords = ["macro", "getter", "setter", "getters", "setters"]
+repository = "https://github.com/andrewsonin/gset"
+license = "MIT"
+edition = "2021"
+
+[lib]
+proc-macro = true
+
+[dependencies]
+quote = "1"
+proc-macro-error = "1"
+proc-macro2 = "1"
+syn = "1"
