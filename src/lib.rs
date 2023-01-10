@@ -21,8 +21,6 @@ use {
     },
 };
 
-mod printable;
-
 #[derive(Debug)]
 enum GetSetKind {
     Get,
@@ -139,7 +137,7 @@ pub fn derive_getset(input: TokenStream) -> TokenStream
                                 meta.span(),
                                 "Unknown getset kind attribute: `{}`. Should be one of: {}",
                                 path,
-                                ALL_KINDS.printable()
+                                ALL_KINDS.iter().printable()
                             )
                         };
                         current_layout.kind = kind.into()
@@ -183,7 +181,7 @@ pub fn derive_getset(input: TokenStream) -> TokenStream
                 abort!(
                     attr.span(),
                     "Missed getset kind attribute. Should be one of: {}",
-                    ALL_KINDS.printable()
+                    ALL_KINDS.iter().printable()
                 )
             };
 
