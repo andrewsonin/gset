@@ -1,6 +1,6 @@
 [package]
 name = "gset"
-version = "0.0.1"
+version = "0.0.2"
 authors = ["Andrew Sonin <sonin.cel@yandex.ru>"]
 description = "A procedural macro for generating the most basic getters and setters on fields."
 categories = ["development-tools::procedural-macro-helpers"]
@@ -14,6 +14,7 @@ proc-macro = true
 
 [dependencies]
 quote = "1"
+printable = "0.0.1"
 proc-macro-error = "1"
 proc-macro2 = "1"
 syn = "1"
