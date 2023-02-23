@@ -27,17 +27,19 @@ enum GetSetKind {
     GetMut,
     GetCopy,
     GetAsDeref(String),
+    GetAsRef(String),
     DerefGet,
     DerefGetMut,
     DerefGetCopy,
     Set,
 }
 
-const ALL_KINDS: [&str; 8] = [
+const ALL_KINDS: [&str; 9] = [
     "get",
     "get_mut",
     "get_copy",
     "get_as_deref<T>",
+    "get_as_ref<T>",
     "deref_get",
     "deref_get_mut",
     "deref_get_copy",
@@ -53,6 +55,7 @@ impl Display for GetSetKind
             GetSetKind::GetMut => f.write_str("get_mut"),
             GetSetKind::GetCopy => f.write_str("get_copy"),
             GetSetKind::GetAsDeref(t) => write!(f, "get_as_deref<{t}>"),
+            GetSetKind::GetAsRef(t) => write!(f, "get_as_ref<{t}>"),
             GetSetKind::DerefGet => f.write_str("deref_get"),
             GetSetKind::DerefGetMut => f.write_str("deref_get_mut"),
             GetSetKind::DerefGetCopy => f.write_str("deref_get_copy"),
@@ -138,6 +141,9 @@ pub fn derive_getset(input: TokenStream) -> TokenStream
                             s if s.starts_with("get_as_deref<") && s.ends_with('>') => {
                                 GetSetKind::GetAsDeref(s.strip_prefix("get_as_deref<").unwrap().strip_suffix('>').unwrap().to_string())
                             },
+                            s if s.starts_with("get_as_ref<") && s.ends_with('>') => {
+                                GetSetKind::GetAsRef(s.strip_prefix("get_as_ref<").unwrap().strip_suffix('>').unwrap().to_string())
+                            },
                             _ => abort!(
                                 meta.span(),
                                 "Unknown getset kind attribute: `{}`. Should be one of: {}",
@@ -222,6 +228,14 @@ pub fn derive_getset(input: TokenStream) -> TokenStream
                     (
                         quote! { #fn_name(&self) },
                         quote! { self.#ident.as_deref() },
+                        quote! { #s }
+                    )
+                }
+                GetSetKind::GetAsRef(s) => {
+                    let fn_name = fn_name.as_ref().unwrap_or(ident);
+                    (
+                        quote! { #fn_name(&self) },
+                        quote! { self.#ident.as_ref() },
                         quote! { #s }
                     )
                 }
