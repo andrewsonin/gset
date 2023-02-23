@@ -26,16 +26,18 @@ enum GetSetKind {
     Get,
     GetMut,
     GetCopy,
+    GetAsDeref(String),
     DerefGet,
     DerefGetMut,
     DerefGetCopy,
     Set,
 }
 
-const ALL_KINDS: [&str; 7] = [
+const ALL_KINDS: [&str; 8] = [
     "get",
     "get_mut",
     "get_copy",
+    "get_as_deref<T>",
     "deref_get",
     "deref_get_mut",
     "deref_get_copy",
@@ -45,17 +47,17 @@ const ALL_KINDS: [&str; 7] = [
 impl Display for GetSetKind
 {
     fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
-        let msg = match self
+        match self
         {
-            GetSetKind::Get => "get",
-            GetSetKind::GetMut => "get_mut",
-            GetSetKind::GetCopy => "get_copy",
-            GetSetKind::DerefGet => "deref_get",
-            GetSetKind::DerefGetMut => "deref_get_mut",
-            GetSetKind::DerefGetCopy => "deref_get_copy",
-            GetSetKind::Set => "set",
-        };
-        write!(f, "{msg}")
+            GetSetKind::Get => f.write_str("get"),
+            GetSetKind::GetMut => f.write_str("get_mut"),
+            GetSetKind::GetCopy => f.write_str("get_copy"),
+            GetSetKind::GetAsDeref(t) => write!(f, "get_as_deref<{t}>"),
+            GetSetKind::DerefGet => f.write_str("deref_get"),
+            GetSetKind::DerefGetMut => f.write_str("deref_get_mut"),
+            GetSetKind::DerefGetCopy => f.write_str("deref_get_copy"),
+            GetSetKind::Set => f.write_str("set"),
+        }
     }
 }
 
@@ -133,6 +135,9 @@ pub fn derive_getset(input: TokenStream) -> TokenStream
                             "deref_get_mut" => GetSetKind::DerefGetMut,
                             "deref_get_copy" => GetSetKind::DerefGetCopy,
                             "set" => GetSetKind::Set,
+                            s if s.starts_with("get_as_deref<") && s.ends_with('>') => {
+                                GetSetKind::GetAsDeref(s.strip_prefix("get_as_deref<").unwrap().strip_suffix('>').unwrap().to_string())
+                            },
                             _ => abort!(
                                 meta.span(),
                                 "Unknown getset kind attribute: `{}`. Should be one of: {}",
@@ -210,6 +215,14 @@ pub fn derive_getset(input: TokenStream) -> TokenStream
                         quote! { #fn_name(&self) },
                         quote! { self.#ident },
                         quote! { #ty }
+                    )
+                }
+                GetSetKind::GetAsDeref(s) => {
+                    let fn_name = fn_name.as_ref().unwrap_or(ident);
+                    (
+                        quote! { #fn_name(&self) },
+                        quote! { self.#ident.as_deref() },
+                        quote! { #s }
                     )
                 }
                 GetSetKind::DerefGet => {
