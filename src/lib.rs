@@ -2,8 +2,8 @@ use {
     printable::AsPrintable,
     proc_macro2::TokenStream as TokenStream2,
     proc_macro::TokenStream,
-    proc_macro_error::{abort, abort_call_site, proc_macro_error, ResultExt},
-    quote::quote,
+    proc_macro_error::{abort, abort_call_site, proc_macro_error, OptionExt, ResultExt},
+    quote::{quote, ToTokens},
     std::fmt::{Display, Formatter},
     syn::{
         Data,
@@ -13,10 +13,12 @@ use {
         Lit,
         Meta,
         MetaNameValue,
+        parse_str,
         parse_macro_input,
         punctuated::Punctuated,
         spanned::Spanned,
         Token,
+        Type,
         Visibility,
     },
 };
@@ -26,20 +28,16 @@ enum GetSetKind {
     Get,
     GetMut,
     GetCopy,
-    GetAsDeref(String),
-    GetAsRef(String),
     DerefGet,
     DerefGetMut,
     DerefGetCopy,
     Set,
 }
 
-const ALL_KINDS: [&str; 9] = [
+const ALL_KINDS: [&str; 7] = [
     "get",
     "get_mut",
     "get_copy",
-    "get_as_deref<T>",
-    "get_as_ref<T>",
     "deref_get",
     "deref_get_mut",
     "deref_get_copy",
@@ -49,18 +47,17 @@ const ALL_KINDS: [&str; 9] = [
 impl Display for GetSetKind
 {
     fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
-        match self
+        let msg = match self
         {
-            GetSetKind::Get => f.write_str("get"),
-            GetSetKind::GetMut => f.write_str("get_mut"),
-            GetSetKind::GetCopy => f.write_str("get_copy"),
-            GetSetKind::GetAsDeref(t) => write!(f, "get_as_deref<{t}>"),
-            GetSetKind::GetAsRef(t) => write!(f, "get_as_ref<{t}>"),
-            GetSetKind::DerefGet => f.write_str("deref_get"),
-            GetSetKind::DerefGetMut => f.write_str("deref_get_mut"),
-            GetSetKind::DerefGetCopy => f.write_str("deref_get_copy"),
-            GetSetKind::Set => f.write_str("set"),
-        }
+            GetSetKind::Get => "get",
+            GetSetKind::GetMut => "get_mut",
+            GetSetKind::GetCopy => "get_copy",
+            GetSetKind::DerefGet => "deref_get",
+            GetSetKind::DerefGetMut => "deref_get_mut",
+            GetSetKind::DerefGetCopy => "deref_get_copy",
+            GetSetKind::Set => "set",
+        };
+        write!(f, "{msg}")
     }
 }
 
@@ -138,12 +135,6 @@ pub fn derive_getset(input: TokenStream) -> TokenStream
                             "deref_get_mut" => GetSetKind::DerefGetMut,
                             "deref_get_copy" => GetSetKind::DerefGetCopy,
                             "set" => GetSetKind::Set,
-                            s if s.starts_with("get_as_deref<") && s.ends_with('>') => {
-                                GetSetKind::GetAsDeref(s.strip_prefix("get_as_deref<").unwrap().strip_suffix('>').unwrap().to_string())
-                            },
-                            s if s.starts_with("get_as_ref<") && s.ends_with('>') => {
-                                GetSetKind::GetAsRef(s.strip_prefix("get_as_ref<").unwrap().strip_suffix('>').unwrap().to_string())
-                            },
                             _ => abort!(
                                 meta.span(),
                                 "Unknown getset kind attribute: `{}`. Should be one of: {}",
@@ -200,10 +191,26 @@ pub fn derive_getset(input: TokenStream) -> TokenStream
             {
                 GetSetKind::Get => {
                     let fn_name = fn_name.as_ref().unwrap_or(ident);
+                    let output_type;
+                    let body;
+                    if ty.to_token_stream().to_string() == "Option < String >" {
+                        output_type = quote! { Option<&str> };
+                        body = quote! { self.#ident.as_deref() };
+                    } else if let Some(inner) = ty.to_token_stream().to_string().strip_prefix("Option < ") {
+                        let inner: Type = inner
+                            .strip_suffix(" >")
+                            .and_then(|s| parse_str(s).ok())
+                            .expect_or_abort("invalid type");
+                        output_type = quote! { Option<&#inner> };
+                        body = quote! { self.#ident.as_ref() };
+                    } else {
+                        output_type = quote! { &#ty };
+                        body = quote! { &self.#ident };
+                    }
                     (
                         quote! { #fn_name(&self) },
-                        quote! { &self.#ident },
-                        quote! { &#ty }
+                        body,
+                        output_type
                     )
                 }
                 GetSetKind::GetMut => {
@@ -221,22 +228,6 @@ pub fn derive_getset(input: TokenStream) -> TokenStream
                         quote! { #fn_name(&self) },
                         quote! { self.#ident },
                         quote! { #ty }
-                    )
-                }
-                GetSetKind::GetAsDeref(s) => {
-                    let fn_name = fn_name.as_ref().unwrap_or(ident);
-                    (
-                        quote! { #fn_name(&self) },
-                        quote! { self.#ident.as_deref() },
-                        quote! { #s }
-                    )
-                }
-                GetSetKind::GetAsRef(s) => {
-                    let fn_name = fn_name.as_ref().unwrap_or(ident);
-                    (
-                        quote! { #fn_name(&self) },
-                        quote! { self.#ident.as_ref() },
-                        quote! { #s }
                     )
                 }
                 GetSetKind::DerefGet => {
