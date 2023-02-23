@@ -2,8 +2,8 @@ use {
     printable::AsPrintable,
     proc_macro2::TokenStream as TokenStream2,
     proc_macro::TokenStream,
-    proc_macro_error::{abort, abort_call_site, proc_macro_error, ResultExt},
-    quote::quote,
+    proc_macro_error::{abort, abort_call_site, proc_macro_error, OptionExt, ResultExt},
+    quote::{quote, ToTokens},
     std::fmt::{Display, Formatter},
     syn::{
         Data,
@@ -13,10 +13,12 @@ use {
         Lit,
         Meta,
         MetaNameValue,
+        parse_str,
         parse_macro_input,
         punctuated::Punctuated,
         spanned::Spanned,
         Token,
+        Type,
         Visibility,
     },
 };
@@ -189,10 +191,26 @@ pub fn derive_getset(input: TokenStream) -> TokenStream
             {
                 GetSetKind::Get => {
                     let fn_name = fn_name.as_ref().unwrap_or(ident);
+                    let output_type;
+                    let body;
+                    if ty.to_token_stream().to_string() == "Option < String >" {
+                        output_type = quote! { Option<&str> };
+                        body = quote! { self.#ident.as_deref() };
+                    } else if let Some(inner) = ty.to_token_stream().to_string().strip_prefix("Option < ") {
+                        let inner: Type = inner
+                            .strip_suffix(" >")
+                            .and_then(|s| parse_str(s).ok())
+                            .expect_or_abort("invalid type");
+                        output_type = quote! { Option<&#inner> };
+                        body = quote! { self.#ident.as_ref() };
+                    } else {
+                        output_type = quote! { &#ty };
+                        body = quote! { &self.#ident };
+                    }
                     (
                         quote! { #fn_name(&self) },
-                        quote! { &self.#ident },
-                        quote! { &#ty }
+                        body,
+                        output_type
                     )
                 }
                 GetSetKind::GetMut => {
