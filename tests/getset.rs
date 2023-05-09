@@ -26,6 +26,12 @@ struct Struct<T, M: Default>
     /// Field 4.
     #[getset(deref_get_copy, name = "get_field_4")]
     field_4: F64,
+
+    /// Field 5.
+    #[getset(as_ref_get, name = "get_field_5", type = "Option<&F64>")]
+    #[getset(as_deref_get, name = "get_field_5_deref", type = "Option<&f64>")]
+    #[getset(as_deref_get_mut, name = "get_field_5_deref_mut", type = "Option<&mut f64>")]
+    field_5: Option<F64>,
 }
 
 struct F64(f64);
