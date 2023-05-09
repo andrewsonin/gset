@@ -17,6 +17,7 @@ use {
         punctuated::Punctuated,
         spanned::Spanned,
         Token,
+        Type,
         Visibility,
     },
 };
@@ -30,16 +31,22 @@ enum GetSetKind {
     DerefGetMut,
     DerefGetCopy,
     Set,
+    AsRefGet,
+    AsDerefGet,
+    AsDerefGetMut,
 }
 
-const ALL_KINDS: [&str; 7] = [
+const ALL_KINDS: [&str; 10] = [
     "get",
     "get_mut",
     "get_copy",
     "deref_get",
     "deref_get_mut",
     "deref_get_copy",
-    "set"
+    "set",
+    "as_ref_get",
+    "as_defer_get",
+    "as_deref_get_mut"
 ];
 
 impl Display for GetSetKind
@@ -54,6 +61,9 @@ impl Display for GetSetKind
             GetSetKind::DerefGetMut => "deref_get_mut",
             GetSetKind::DerefGetCopy => "deref_get_copy",
             GetSetKind::Set => "set",
+            GetSetKind::AsRefGet => "as_ref_get",
+            GetSetKind::AsDerefGet => "as_deref_get",
+            GetSetKind::AsDerefGetMut => "as_deref_get_mut"
         };
         write!(f, "{msg}")
     }
@@ -82,12 +92,13 @@ pub fn derive_getset(input: TokenStream) -> TokenStream
         fn_name: Option<proc_macro2::Ident>,
         visibility: Option<Visibility>,
         kind: Option<GetSetKind>,
+        ty: Option<Type>,
     }
 
     let mut impls = TokenStream2::new();
     for field in fields
     {
-        let Field { attrs, ident, ty, .. } = field;
+        let Field { attrs, ident, ty: field_type, .. } = field;
         let ident = if let Some(ident) = ident {
             ident
         } else {
@@ -133,6 +144,9 @@ pub fn derive_getset(input: TokenStream) -> TokenStream
                             "deref_get_mut" => GetSetKind::DerefGetMut,
                             "deref_get_copy" => GetSetKind::DerefGetCopy,
                             "set" => GetSetKind::Set,
+                            "as_ref_get" => GetSetKind::AsRefGet,
+                            "as_deref_get" => GetSetKind::AsDerefGet,
+                            "as_deref_get_mut" => GetSetKind::AsDerefGetMut,
                             _ => abort!(
                                 meta.span(),
                                 "Unknown getset kind attribute: `{}`. Should be one of: {}",
@@ -164,6 +178,12 @@ pub fn derive_getset(input: TokenStream) -> TokenStream
                                     .expect_or_abort("invalid visibility found")
                                     .into()
                             }
+                            "type" => {
+                                current_layout.ty = syn::parse_str::<Type>(&lit_str)
+                                    .map_err(|e| syn::Error::new(lit.span(), e))
+                                    .expect_or_abort("invalid type found")
+                                    .into()
+                            }
                             _ => abort!(
                                 lit.span(),
                                 "Unknown named attribute. Should be one of: [name, vis]"
@@ -173,7 +193,8 @@ pub fn derive_getset(input: TokenStream) -> TokenStream
                 }
             }
 
-            let GetSetLayout { fn_name, visibility, kind } = current_layout;
+            let GetSetLayout { fn_name, visibility, kind, ty } = current_layout;
+            let get_ty_override = || ty.map(|ty| quote! { #ty });
 
             let kind = if let Some(kind) = kind {
                 kind
@@ -192,7 +213,7 @@ pub fn derive_getset(input: TokenStream) -> TokenStream
                     (
                         quote! { #fn_name(&self) },
                         quote! { &self.#ident },
-                        quote! { &#ty }
+                        get_ty_override().unwrap_or_else(|| quote! { &#field_type })
                     )
                 }
                 GetSetKind::GetMut => {
@@ -201,7 +222,7 @@ pub fn derive_getset(input: TokenStream) -> TokenStream
                     (
                         quote! { #fn_name(&mut self) },
                         quote! { &mut self.#ident },
-                        quote! { &mut #ty }
+                        get_ty_override().unwrap_or_else(|| quote! { &mut #field_type })
                     )
                 }
                 GetSetKind::GetCopy => {
@@ -209,7 +230,7 @@ pub fn derive_getset(input: TokenStream) -> TokenStream
                     (
                         quote! { #fn_name(&self) },
                         quote! { self.#ident },
-                        quote! { #ty }
+                        get_ty_override().unwrap_or_else(|| quote! { #field_type })
                     )
                 }
                 GetSetKind::DerefGet => {
@@ -217,7 +238,7 @@ pub fn derive_getset(input: TokenStream) -> TokenStream
                     (
                         quote! { #fn_name(&self) },
                         quote! { &self.#ident },
-                        quote! { &<#ty as ::std::ops::Deref>::Target }
+                        get_ty_override().unwrap_or_else(|| quote! { &<#field_type as ::std::ops::Deref>::Target })
                     )
                 }
                 GetSetKind::DerefGetMut => {
@@ -226,7 +247,7 @@ pub fn derive_getset(input: TokenStream) -> TokenStream
                     (
                         quote! { #fn_name(&mut self) },
                         quote! { &mut self.#ident },
-                        quote! { &mut <#ty as ::std::ops::Deref>::Target }
+                        get_ty_override().unwrap_or_else(|| quote! { &mut <#field_type as ::std::ops::Deref>::Target })
                     )
                 }
                 GetSetKind::DerefGetCopy => {
@@ -234,16 +255,65 @@ pub fn derive_getset(input: TokenStream) -> TokenStream
                     (
                         quote! { #fn_name(&self) },
                         quote! { *self.#ident },
-                        quote! { <#ty as ::std::ops::Deref>::Target }
+                        get_ty_override().unwrap_or_else(|| quote! { <#field_type as ::std::ops::Deref>::Target })
                     )
                 }
                 GetSetKind::Set => {
                     let fn_name = fn_name
                         .unwrap_or_else(|| syn::parse_str(&format!("set_{ident}")).unwrap());
                     (
-                        quote! { #fn_name(&mut self, value: #ty) },
+                        quote! { #fn_name(&mut self, value: #field_type) },
                         quote! { self.#ident = value },
-                        quote! { () }
+                        get_ty_override().unwrap_or_else(|| quote! { () })
+                    )
+                }
+                GetSetKind::AsRefGet => {
+                    let fn_name = fn_name.as_ref().unwrap_or(ident);
+                    let ty = get_ty_override()
+                        .unwrap_or_else(
+                            || abort!(
+                                attr.span(),
+                                "Missed `type` attribute. \
+                                Should be set for `as_ref_get` getset kind",
+                            )
+                        );
+                    (
+                        quote! { #fn_name(&self) },
+                        quote! { self.#ident.as_ref() },
+                        ty
+                    )
+                }
+                GetSetKind::AsDerefGet => {
+                    let fn_name = fn_name.as_ref().unwrap_or(ident);
+                    let ty = get_ty_override()
+                        .unwrap_or_else(
+                            || abort!(
+                                attr.span(),
+                                "Missed `type` attribute. \
+                                Should be set for `as_deref_get` getset kind",
+                            )
+                        );
+                    (
+                        quote! { #fn_name(&self) },
+                        quote! { self.#ident.as_deref() },
+                        ty
+                    )
+                }
+                GetSetKind::AsDerefGetMut => {
+                    let fn_name = fn_name
+                        .unwrap_or_else(|| syn::parse_str(&format!("{ident}_mut")).unwrap());
+                    let ty = get_ty_override()
+                        .unwrap_or_else(
+                            || abort!(
+                                attr.span(),
+                                "Missed `type` attribute. \
+                                Should be set for `as_deref_get_mut` getset kind",
+                            )
+                        );
+                    (
+                        quote! { #fn_name(&mut self) },
+                        quote! { self.#ident.as_deref_mut() },
+                        ty
                     )
                 }
             };
