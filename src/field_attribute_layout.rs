@@ -62,15 +62,15 @@ where
                                 .expect_or_abort("invalid visibility found")
                                 .into()
                         }
-                        "type" => {
+                        "ty" => {
                             current_layout.type_override = syn::parse_str::<Type>(&lit_str)
                                 .map_err(|e| syn::Error::new(lit.span(), e))
-                                .expect_or_abort("invalid type found")
+                                .expect_or_abort("invalid ty found")
                                 .into()
                         }
                         _ => abort!(
                             lit.span(),
-                            "Unknown named attribute. Should be one of: `name`, `vis`, `type`"
+                            "Unknown named attribute. Should be one of: `name`, `vis`, `ty`"
                         ),
                     }
                 }
@@ -191,8 +191,7 @@ impl AttributeLayout {
                 let ty = get_ty_override().unwrap_or_else(|| {
                     abort!(
                         attr_span(),
-                        "Missed `type` attribute. \
-                            Should be set for `as_ref_get` getset kind",
+                        "Missed `ty` attribute. Should be set for `as_ref_get` getset kind",
                     )
                 });
                 (
@@ -206,8 +205,7 @@ impl AttributeLayout {
                 let ty = get_ty_override().unwrap_or_else(|| {
                     abort!(
                         attr_span(),
-                        "Missed `type` attribute. \
-                            Should be set for `as_deref_get` getset kind",
+                        "Missed `ty` attribute. Should be set for `as_deref_get` getset kind",
                     )
                 });
                 (
@@ -221,8 +219,7 @@ impl AttributeLayout {
                 let ty = get_ty_override().unwrap_or_else(|| {
                     abort!(
                         attr_span(),
-                        "Missed `type` attribute. \
-                            Should be set for `as_deref_get_mut` getset kind",
+                        "Missed `ty` attribute. Should be set for `as_deref_get_mut` getset kind",
                     )
                 });
                 (

@@ -34,12 +34,12 @@ where
     field_4: F64,
 
     /// Field 5.
-    #[getset(as_ref_get, name = "get_field_5", type = "Option<&F64>")]
-    #[getset(as_deref_get, name = "get_field_5_deref", type = "Option<&f64>")]
+    #[getset(as_ref_get, name = "get_field_5", ty = "Option<&F64>")]
+    #[getset(as_deref_get, name = "get_field_5_deref", ty = "Option<&f64>")]
     #[getset(
         as_deref_get_mut,
         name = "get_field_5_deref_mut",
-        type = "Option<&mut f64>"
+        ty = "Option<&mut f64>"
     )]
     field_5: Option<F64>,
 }
