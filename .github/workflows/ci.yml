@@ -1,0 +1,75 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  CARGO_TERM_COLOR: always
+  RUSTFLAGS: -Dwarnings
+  RUST_BACKTRACE: 1
+  RUST_LOG: gset
+
+jobs:
+  fmt:
+    name: "Fmt"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: rustup show active-toolchain -v
+      - run: rustup component add rustfmt
+      - run: cargo fmt --version
+      - run: cargo fmt -- --check
+
+  build:
+    name: "Build"
+    needs: fmt
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Build project
+        run: cargo build --all-targets --all-features
+
+  docs:
+    name: "Docs"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Build Documentation
+        run: cargo doc --all --no-deps --release
+
+  clippy:
+    name: "Clippy"
+    needs: fmt
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Add clippy
+        run: rustup component add clippy
+      - name: Clippy version
+        run: cargo clippy --version
+      - name: Run clippy
+        run: cargo clippy
+      - name: Run clippy with all features
+        run: cargo clippy --all-targets --all-features
+      - name: Run clippy on tests
+        run: cargo clippy --tests --all-targets --all-features
+
+  tests:
+    name: "Tests"
+    needs: [build, clippy]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Run tests
+        run: cargo test
+      - name: Run tests with all features
+        run: cargo test --all-features
+      - name: Run tests with all features in release mode
+        run: cargo test --all-features --release
