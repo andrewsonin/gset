@@ -5,7 +5,10 @@ authors = ["Andrew Sonin <sonin.cel@yandex.ru>"]
 description = "A procedural macro for generating the most basic getters and setters on fields."
 categories = ["development-tools::procedural-macro-helpers"]
 keywords = ["macro", "getter", "setter", "getters", "setters"]
+documentation = "https://docs.rs/gset/"
 repository = "https://github.com/andrewsonin/gset"
+homepage = "https://github.com/andrewsonin/gset"
+readme = "README.md"
 license = "MIT"
 edition = "2021"
 
