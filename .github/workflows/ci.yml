@@ -68,8 +68,8 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
       - name: Run tests
-        run: cargo test
+        run: cargo test --lib --bins --tests
       - name: Run tests with all features
-        run: cargo test --all-features
+        run: cargo test --lib --bins --tests --all-features
       - name: Run tests with all features in release mode
-        run: cargo test --all-features --release
+        run: cargo test --lib --bins --tests --all-features --release

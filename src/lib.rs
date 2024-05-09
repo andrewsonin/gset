@@ -1,3 +1,5 @@
+#![doc = include_str!("../README.md")]
+
 use field_attribute_layout::AttributeLayout;
 use proc_macro::TokenStream;
 use proc_macro2::TokenStream as TokenStream2;
