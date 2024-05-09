@@ -1,9 +1,15 @@
-use {gset::Getset, std::{fmt::Debug, ops::{Deref, DerefMut}}};
+#![allow(dead_code)]
+
+use gset::Getset;
+use std::{
+    fmt::Debug,
+    ops::{Deref, DerefMut},
+};
 
 #[derive(Getset)]
 struct Struct<T, M: Default>
-    where
-        T: Debug
+where
+    T: Debug,
 {
     /// Field 1.
     #[getset(get_copy, name = "get_field_1", vis = "pub")]
@@ -30,14 +36,17 @@ struct Struct<T, M: Default>
     /// Field 5.
     #[getset(as_ref_get, name = "get_field_5", type = "Option<&F64>")]
     #[getset(as_deref_get, name = "get_field_5_deref", type = "Option<&f64>")]
-    #[getset(as_deref_get_mut, name = "get_field_5_deref_mut", type = "Option<&mut f64>")]
+    #[getset(
+        as_deref_get_mut,
+        name = "get_field_5_deref_mut",
+        type = "Option<&mut f64>"
+    )]
     field_5: Option<F64>,
 }
 
 struct F64(f64);
 
-impl Deref for F64
-{
+impl Deref for F64 {
     type Target = f64;
 
     fn deref(&self) -> &Self::Target {
@@ -45,8 +54,7 @@ impl Deref for F64
     }
 }
 
-impl DerefMut for F64
-{
+impl DerefMut for F64 {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.0
     }
