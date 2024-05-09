@@ -7,7 +7,7 @@ use std::{
 };
 
 #[derive(Getset)]
-struct Struct<T, M: Default>
+struct Struct1<T, M: Default>
 where
     T: Debug,
 {
@@ -19,30 +19,63 @@ where
     field_1: f64,
 
     /// Field 2.
-    #[getset(deref_get, vis = "pub")]
-    #[getset(deref_get_mut, vis = "pub")]
+    #[getset(get_deref, vis = "pub")]
+    #[getset(get_deref_mut, vis = "pub")]
     #[getset(get, name = "get_field_2")]
     #[getset(set, vis = "pub")]
     field_2: Vec<T>,
 
     /// Field 3.
-    #[getset(deref_get_mut, name = "get_field_3", vis = "pub(crate)")]
+    #[getset(get_deref_mut, name = "get_field_3", vis = "pub(crate)")]
     field_3: Vec<M>,
 
     /// Field 4.
-    #[getset(deref_get_copy, name = "get_field_4")]
+    #[getset(get_deref_copy, name = "get_field_4")]
     field_4: F64,
 
     /// Field 5.
-    #[getset(as_ref_get, name = "get_field_5", ty = "Option<&F64>")]
-    #[getset(as_deref_get, name = "get_field_5_deref", ty = "Option<&f64>")]
+    #[getset(get_as_ref, name = "get_field_5", ty = "Option<&F64>")]
+    #[getset(get_as_deref, name = "get_field_5_deref", ty = "Option<&f64>")]
     #[getset(
-        as_deref_get_mut,
+        get_as_deref_mut,
         name = "get_field_5_deref_mut",
         ty = "Option<&mut f64>"
     )]
     field_5: Option<F64>,
 }
+
+#[derive(Getset)]
+struct Struct2<T, M: Default>(
+    /// Field 1.
+    #[getset(get_copy, name = "get_field_1", vis = "pub")]
+    #[getset(get_mut, name = "get_field_1_mut", vis = "pub")]
+    #[getset(get, name = "get_field_1_ref", vis = "pub")]
+    #[getset(set, name = "set_field_1")]
+    f64,
+    /// Field 2.
+    #[getset(get_deref, name = "get_field_2", vis = "pub")]
+    #[getset(get_deref_mut, name = "get_field_2_mut", vis = "pub")]
+    #[getset(get, name = "get_field_2_ref")]
+    #[getset(set, name = "set_field_2", vis = "pub")]
+    Vec<T>,
+    /// Field 3.
+    #[getset(get_deref_mut, name = "get_field_3", vis = "pub(crate)")]
+    Vec<M>,
+    /// Field 4.
+    #[getset(get_deref_copy, name = "get_field_4")]
+    F64,
+    /// Field 5.
+    #[getset(get_as_ref, name = "get_field_5", ty = "Option<&F64>")]
+    #[getset(get_as_deref, name = "get_field_5_deref", ty = "Option<&f64>")]
+    #[getset(
+        get_as_deref_mut,
+        name = "get_field_5_deref_mut",
+        ty = "Option<&mut f64>"
+    )]
+    Option<F64>,
+)
+where
+    T: Debug;
 
 struct F64(f64);
 

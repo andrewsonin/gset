@@ -70,7 +70,7 @@ where
                         }
                         _ => abort!(
                             lit.span(),
-                            "Unknown named attribute. Should be one of: `name`, `vis`, `ty`"
+                            "Unknown named parameter. Should be one of: `name`, `vis`, `ty`"
                         ),
                     }
                 }
@@ -150,7 +150,7 @@ impl AttributeLayout {
                     get_ty_override().unwrap_or_else(|| quote! { #field_type }),
                 )
             }
-            AttributeKind::DerefGet => {
+            AttributeKind::GetDeref => {
                 let fn_name = getter_fn_name();
                 (
                     quote! { #fn_name(&self) },
@@ -159,7 +159,7 @@ impl AttributeLayout {
                         .unwrap_or_else(|| quote! { &<#field_type as ::std::ops::Deref>::Target }),
                 )
             }
-            AttributeKind::DerefGetMut => {
+            AttributeKind::GetDerefMut => {
                 let fn_name = mut_getter_fn_name();
                 (
                     quote! { #fn_name(&mut self) },
@@ -169,7 +169,7 @@ impl AttributeLayout {
                     ),
                 )
             }
-            AttributeKind::DerefGetCopy => {
+            AttributeKind::GetDerefCopy => {
                 let fn_name = getter_fn_name();
                 (
                     quote! { #fn_name(&self) },
@@ -178,20 +178,12 @@ impl AttributeLayout {
                         .unwrap_or_else(|| quote! { <#field_type as ::std::ops::Deref>::Target }),
                 )
             }
-            AttributeKind::Set => {
-                let fn_name = setter_fn_name();
-                (
-                    quote! { #fn_name(&mut self, value: #field_type) },
-                    quote! { self.#field_ident_or_idx = value },
-                    get_ty_override().unwrap_or_else(|| quote! { () }),
-                )
-            }
-            AttributeKind::AsRefGet => {
+            AttributeKind::GetAsRef => {
                 let fn_name = getter_fn_name();
                 let ty = get_ty_override().unwrap_or_else(|| {
                     abort!(
                         attr_span(),
-                        "Missed `ty` attribute. Should be set for `as_ref_get` getset kind",
+                        "Missed `ty` named parameter. Should be set for `get_as_ref` getset kind",
                     )
                 });
                 (
@@ -200,12 +192,12 @@ impl AttributeLayout {
                     ty,
                 )
             }
-            AttributeKind::AsDerefGet => {
+            AttributeKind::GetAsDeref => {
                 let fn_name = getter_fn_name();
                 let ty = get_ty_override().unwrap_or_else(|| {
                     abort!(
                         attr_span(),
-                        "Missed `ty` attribute. Should be set for `as_deref_get` getset kind",
+                        "Missed `ty` named parameter. Should be set for `get_as_deref` getset kind",
                     )
                 });
                 (
@@ -214,18 +206,26 @@ impl AttributeLayout {
                     ty,
                 )
             }
-            AttributeKind::AsDerefGetMut => {
+            AttributeKind::GetAsDerefMut => {
                 let fn_name = mut_getter_fn_name();
                 let ty = get_ty_override().unwrap_or_else(|| {
                     abort!(
                         attr_span(),
-                        "Missed `ty` attribute. Should be set for `as_deref_get_mut` getset kind",
+                        "Missed `ty` named parameter. Should be set for `get_as_deref_mut` getset kind",
                     )
                 });
                 (
                     quote! { #fn_name(&mut self) },
                     quote! { self.#field_ident_or_idx.as_deref_mut() },
                     ty,
+                )
+            }
+            AttributeKind::Set => {
+                let fn_name = setter_fn_name();
+                (
+                    quote! { #fn_name(&mut self, value: #field_type) },
+                    quote! { self.#field_ident_or_idx = value },
+                    get_ty_override().unwrap_or_else(|| quote! { () }),
                 )
             }
         };
@@ -252,7 +252,7 @@ where
         .unwrap_or_else(|| {
             abort!(
                 attr_span(),
-                "Missed `name` attribute. \
+                "Missed `name` named parameter. \
                 Should be set for `{}` getset kind when struct ",
                 attr_kind
             )

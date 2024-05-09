@@ -62,12 +62,12 @@ define_field_attributes!(
         Get           => "get",
         GetMut        => "get_mut",
         GetCopy       => "get_copy",
-        DerefGet      => "deref_get",
-        DerefGetMut   => "deref_get_mut",
-        DerefGetCopy  => "deref_get_copy",
-        Set           => "set",
-        AsRefGet      => "as_ref_get",
-        AsDerefGet    => "as_deref_get",
-        AsDerefGetMut => "as_deref_get_mut"
+        GetDeref      => "get_deref",
+        GetDerefMut   => "get_deref_mut",
+        GetDerefCopy  => "get_deref_copy",
+        GetAsRef      => "get_as_ref",
+        GetAsDeref    => "get_as_deref",
+        GetAsDerefMut => "get_as_deref_mut",
+        Set           => "set"
     }
 );
