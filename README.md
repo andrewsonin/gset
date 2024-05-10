@@ -20,63 +20,24 @@ Provides a procedural macro capable of deriving  basic getters and setters for s
 
 ## Usage example
 
-A comprehensive example of using this library is provided below.
+An example of using this library is provided below.
 
 ```rust
 use gset::Getset;
 
 #[derive(Getset)]
-struct Struct<T, M: Default>
-where
-    T: Debug,
+struct Struct<T>
 {
     /// Field 1.
     #[getset(get_copy, name = "get_field_1", vis = "pub")]
-    #[getset(get_mut, vis = "pub")]
-    #[getset(get, vis = "pub")]
     #[getset(set)]
     field_1: f64,
-  
+
     /// Field 2.
     #[getset(get_deref, vis = "pub")]
     #[getset(get_deref_mut, vis = "pub")]
-    #[getset(get, name = "get_field_2")]
     #[getset(set, vis = "pub")]
     field_2: Vec<T>,
-  
-    /// Field 3.
-    #[getset(get_deref_mut, name = "get_field_3", vis = "pub(crate)")]
-    field_3: Vec<M>,
-  
-    /// Field 4.
-    #[getset(get_deref_copy, name = "get_field_4")]
-    field_4: F64,
-  
-    /// Field 5.
-    #[getset(get_as_ref, name = "get_field_5", ty = "Option<&F64>")]
-    #[getset(get_as_deref, name = "get_field_5_deref", ty = "Option<&f64>")]
-    #[getset(
-        get_as_deref_mut,
-        name = "get_field_5_deref_mut",
-        ty = "Option<&mut f64>"
-    )]
-    field_5: Option<F64>,
-}
-
-struct F64(f64);
-
-impl Deref for F64 {
-    type Target = f64;
-  
-    fn deref(&self) -> &Self::Target {
-      &self.0
-    }
-}
-
-impl DerefMut for F64 {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-      &mut self.0
-    }
 }
 ```
 
@@ -84,43 +45,22 @@ This also works well for tuple structures,
 but the `name` parameter becomes mandatory.
 
 ```rust
+use gset::Getset;
+
 #[derive(Getset)]
-struct Struct2<T, M: Default>(
+struct Struct<T>(
 
     /// Field 1.
     #[getset(get_copy, name = "get_field_1", vis = "pub")]
-    #[getset(get_mut, name = "get_field_1_mut", vis = "pub")]
-    #[getset(get, name = "get_field_1_ref", vis = "pub")]
     #[getset(set, name = "set_field_1")]
     f64,
 
     /// Field 2.
     #[getset(get_deref, name = "get_field_2", vis = "pub")]
     #[getset(get_deref_mut, name = "get_field_2_mut", vis = "pub")]
-    #[getset(get, name = "get_field_2_ref")]
     #[getset(set, name = "set_field_2", vis = "pub")]
     Vec<T>,
-
-    /// Field 3.
-    #[getset(get_deref_mut, name = "get_field_3", vis = "pub(crate)")]
-    Vec<M>,
-
-    /// Field 4.
-    #[getset(get_deref_copy, name = "get_field_4")]
-    F64,
-
-    /// Field 5.
-    #[getset(get_as_ref, name = "get_field_5", ty = "Option<&F64>")]
-    #[getset(get_as_deref, name = "get_field_5_deref", ty = "Option<&f64>")]
-    #[getset(
-        get_as_deref_mut,
-        name = "get_field_5_deref_mut",
-        ty = "Option<&mut f64>"
-    )]
-    Option<F64>,
-)
-where
-    T: Debug;
+);
 ```
 
 ## Field attributes
@@ -155,6 +95,8 @@ Derives a reference getter for a field.
 #### Example
 
 ```rust
+use gset::Getset;
+
 #[derive(Getset)]
 struct Struct {
     /// Doc comment.
@@ -164,6 +106,11 @@ struct Struct {
 ```
 will expand into
 ```rust
+struct Struct {
+    /// Doc comment.
+    a: f64,
+}
+
 impl Struct {
     /// Doc comment.
     #[inline]
@@ -185,6 +132,8 @@ Derives a mutable getter for a field.
 #### Example
 
 ```rust
+use gset::Getset;
+
 #[derive(Getset)]
 struct Struct {
     /// Doc comment.
@@ -194,6 +143,11 @@ struct Struct {
 ```
 will expand into
 ```rust
+struct Struct {
+    /// Doc comment.
+    a: f64,
+}
+
 impl Struct {
     /// Doc comment.
     #[inline]
@@ -215,6 +169,8 @@ Derives a copy getter for a field.
 #### Example
 
 ```rust
+use gset::Getset;
+
 #[derive(Getset)]
 struct Struct {
     /// Doc comment.
@@ -224,6 +180,11 @@ struct Struct {
 ```
 will expand into
 ```rust
+struct Struct {
+    /// Doc comment.
+    a: f64,
+}
+
 impl Struct {
     /// Doc comment.
     #[inline]
@@ -245,6 +206,8 @@ Derives a reference getter for a field, which applies the `deref` operation to t
 #### Example
 
 ```rust
+use gset::Getset;
+
 #[derive(Getset)]
 struct Struct {
     /// Doc comment.
@@ -254,6 +217,11 @@ struct Struct {
 ```
 will expand into
 ```rust
+struct Struct {
+    /// Doc comment.
+    a: Vec<f64>,
+}
+
 impl Struct {
     /// Doc comment.
     #[inline]
@@ -275,6 +243,8 @@ Derives a mutable getter for a field, which applies the `deref_mut` operation to
 #### Example
 
 ```rust
+use gset::Getset;
+
 #[derive(Getset)]
 struct Struct {
     /// Doc comment.
@@ -284,6 +254,11 @@ struct Struct {
 ```
 will expand into
 ```rust
+struct Struct {
+    /// Doc comment.
+    a: Vec<f64>,
+}
+
 impl Struct {
     /// Doc comment.
     #[inline]
@@ -305,6 +280,9 @@ Derives a copy getter for a field, which applies dereferencing to the field valu
 #### Example
 
 ```rust
+use derive_more::Deref;
+use gset::Getset;
+
 #[derive(Getset)]
 struct Struct {
     /// Doc comment.
@@ -317,6 +295,16 @@ struct F64(f64);
 ```
 will expand into
 ```rust
+use derive_more::Deref;
+
+struct Struct {
+    /// Doc comment.
+    a: F64,
+}
+
+#[derive(Deref)]
+struct F64(f64);
+
 impl Struct {
     /// Doc comment.
     #[inline]
@@ -333,11 +321,13 @@ Derives a reference getter for a field, which applies the `as_ref` operation to 
 #### Parameters
 - `name` — name of the resulting method. If not set, it will be named as `field`.
 - `vis` — visibility of the resulting method. If not set, it will be private.
-- `ty` — required parameter.
+- `ty` — return type of the resulting method. Required parameter.
 
 #### Example
 
 ```rust
+use gset::Getset;
+
 #[derive(Getset)]
 struct Struct {
     /// Doc comment.
@@ -347,6 +337,11 @@ struct Struct {
 ```
 will expand into
 ```rust
+struct Struct {
+    /// Doc comment.
+    a: Option<f64>,
+}
+
 impl Struct {
     /// Doc comment.
     #[inline]
@@ -363,11 +358,14 @@ Derives a reference getter for a field, which applies the `as_deref` operation t
 #### Parameters
 - `name` — name of the resulting method. If not set, it will be named as `field`.
 - `vis` — visibility of the resulting method. If not set, it will be private.
-- `ty` — required parameter.
+- `ty` — return type of the resulting method. Required parameter.
 
 #### Example
 
 ```rust
+use derive_more::Deref;
+use gset::Getset;
+
 #[derive(Getset)]
 struct Struct {
     /// Doc comment.
@@ -380,6 +378,16 @@ struct F64(f64);
 ```
 will expand into
 ```rust
+use derive_more::Deref;
+
+struct Struct {
+    /// Doc comment.
+    a: Option<F64>,
+}
+
+#[derive(Deref)]
+struct F64(f64);
+
 impl Struct {
     /// Doc comment.
     #[inline]
@@ -396,11 +404,14 @@ Derives a mutable getter for a field, which applies the `as_deref_mut` operation
 #### Parameters
 - `name` — name of the resulting method. If not set, it will be named as `field_mut`.
 - `vis` — visibility of the resulting method. If not set, it will be private.
-- `ty` — required parameter.
+- `ty` — return type of the resulting method. Required parameter.
 
 #### Example
 
 ```rust
+use derive_more::{Deref, DerefMut};
+use gset::Getset;
+
 #[derive(Getset)]
 struct Struct {
     /// Doc comment.
@@ -413,6 +424,16 @@ struct F64(f64);
 ```
 will expand into
 ```rust
+use derive_more::{Deref, DerefMut};
+
+struct Struct {
+    /// Doc comment.
+    a: Option<F64>,
+}
+
+#[derive(Deref, DerefMut)]
+struct F64(f64);
+
 impl Struct {
     /// Doc comment.
     #[inline]
@@ -433,6 +454,8 @@ Derives a setter for a field.
 #### Example
 
 ```rust
+use gset::Getset;
+
 #[derive(Getset)]
 struct Struct {
     /// Doc comment.
@@ -442,6 +465,11 @@ struct Struct {
 ```
 will expand into
 ```rust
+struct Struct {
+    /// Doc comment.
+    a: f64,
+}
+
 impl Struct {
     /// Doc comment.
     #[inline]
