@@ -13,6 +13,7 @@ use syn::{
 mod field_attribute_layout;
 mod field_attributes;
 
+/// Derives getters and setters.
 #[proc_macro_derive(Getset, attributes(getset))]
 #[proc_macro_error]
 pub fn derive_getset(input: TokenStream) -> TokenStream {

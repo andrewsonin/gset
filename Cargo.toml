@@ -1,6 +1,6 @@
 [package]
 name = "gset"
-version = "1.0.2"
+version = "1.0.3"
 authors = ["Andrew Sonin <sonin.cel@yandex.ru>"]
 description = "A procedural macro for generating the most basic getters and setters on fields."
 categories = ["development-tools::procedural-macro-helpers"]
