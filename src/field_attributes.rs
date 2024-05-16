@@ -36,7 +36,7 @@ macro_rules! define_field_attributes
             pub fn all_kinds() -> impl std::fmt::Display
             {
                 use lazy_format::lazy_format;
-                use printable::AsPrintable;
+                use printable::prelude::PrintableIter;
 
                 Self::ALL_KINDS.iter()
                     .map(|kind| lazy_format!("`{kind}`"))
