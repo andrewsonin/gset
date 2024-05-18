@@ -1,4 +1,5 @@
 #![allow(dead_code)]
+#![allow(clippy::struct_field_names)]
 
 use gset::Getset;
 use std::{

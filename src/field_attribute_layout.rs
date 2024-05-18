@@ -5,11 +5,11 @@ use quote::quote;
 use syn::{spanned::Spanned, Lit, Meta, MetaNameValue, Type, Visibility};
 
 #[derive(Default)]
-pub struct AttributeLayout {
-    pub fn_name_override: Option<Ident>,
-    pub visibility: Option<Visibility>,
-    pub kind: Option<AttributeKind>,
-    pub type_override: Option<Type>,
+pub(crate) struct AttributeLayout {
+    fn_name_override: Option<Ident>,
+    visibility: Option<Visibility>,
+    kind: Option<AttributeKind>,
+    type_override: Option<Type>,
 }
 
 impl<T> From<T> for AttributeLayout
@@ -30,7 +30,7 @@ where
                             path
                         )
                     }
-                    let kind: AttributeKind = path.parse().unwrap_or_else(|_| {
+                    let kind: AttributeKind = path.parse().unwrap_or_else(|()| {
                         abort!(
                             meta.span(),
                             "Unknown getset kind attribute: `{}`. Should be one of: {}",
@@ -38,7 +38,7 @@ where
                             AttributeKind::all_kinds()
                         )
                     });
-                    current_layout.kind = kind.into()
+                    current_layout.kind = kind.into();
                 }
                 Meta::List(list) => {
                     abort!(list.span(), "Multiple attributes are not supported")
@@ -54,19 +54,19 @@ where
                             current_layout.fn_name_override = syn::parse_str::<Ident>(&lit_str)
                                 .map_err(|e| syn::Error::new(lit.span(), e))
                                 .expect_or_abort("invalid ident")
-                                .into()
+                                .into();
                         }
                         "vis" => {
                             current_layout.visibility = syn::parse_str::<Visibility>(&lit_str)
                                 .map_err(|e| syn::Error::new(lit.span(), e))
                                 .expect_or_abort("invalid visibility found")
-                                .into()
+                                .into();
                         }
                         "ty" => {
                             current_layout.type_override = syn::parse_str::<Type>(&lit_str)
                                 .map_err(|e| syn::Error::new(lit.span(), e))
                                 .expect_or_abort("invalid ty found")
-                                .into()
+                                .into();
                         }
                         _ => abort!(
                             lit.span(),
@@ -81,7 +81,8 @@ where
 }
 
 impl AttributeLayout {
-    pub fn generate_fn_def(
+    #[allow(clippy::too_many_lines)]
+    pub(crate) fn generate_fn_def(
         self,
         field_ident_or_idx: &str,
         field_type: &Type,

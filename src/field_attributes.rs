@@ -8,7 +8,7 @@ macro_rules! define_field_attributes
 
         impl std::fmt::Display for $enum_name
         {
-            fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
                 let msg: &str = self.into();
                 write!(f, "{msg}")
             }

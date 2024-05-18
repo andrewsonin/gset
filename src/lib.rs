@@ -26,9 +26,8 @@ pub fn derive_getset(input: TokenStream) -> TokenStream {
     } = &ast;
     let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
 
-    let fields = match data {
-        Data::Struct(DataStruct { fields, .. }) => fields,
-        _ => abort_call_site!("#[derive(Getset)] is only supported for structs"),
+    let Data::Struct(DataStruct { fields, .. }) = data else {
+        abort_call_site!("#[derive(Getset)] is only supported for structs")
     };
 
     let mut impls = TokenStream2::new();
@@ -47,6 +46,7 @@ pub fn derive_getset(input: TokenStream) -> TokenStream {
             continue;
         }
 
+        #[allow(clippy::map_unwrap_or)]
         let ident_or_index = field_ident
             .as_ref()
             .map(ToString::to_string)
@@ -77,7 +77,7 @@ pub fn derive_getset(input: TokenStream) -> TokenStream {
                 #fn_def
             };
 
-            impls.extend(imp)
+            impls.extend(imp);
         }
     }
 
