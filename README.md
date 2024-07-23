@@ -67,8 +67,8 @@ struct Struct<T>(
 
 All field attributes have the following named parameters:
 - `name` — name of the method being inferred.
-Must be a valid Rust [identifier](https://docs.rs/syn/1.0.109/syn/struct.Ident.html).
-This is a required parameter for tuple structs.
+  Must be a valid Rust [identifier](https://docs.rs/syn/1.0.109/syn/struct.Ident.html).
+  This is a required parameter for tuple structs.
 - `vis` — visibility of the method being inferred.
   Must be a valid Rust [visibility modifier](https://docs.rs/syn/1.0.109/syn/enum.Visibility.html).
   Visibility is `private` by default.
@@ -475,6 +475,80 @@ impl Struct {
     #[inline]
     pub fn set_a(&mut self, value: f64) {
         self.a = value
+    }
+}
+```
+
+### 11. `set_borrow`
+
+Derives a borrowing setter for a field.
+
+#### Parameters
+- `name` — name of the resulting method. If not set, it will be named as `set_field`.
+- `vis` — visibility of the resulting method. If not set, it will be private.
+
+#### Example
+
+```rust
+use gset::Getset;
+
+#[derive(Getset)]
+struct Struct {
+    /// Doc comment.
+    #[getset(set_borrow, vis = "pub")]
+    a: f64,
+}
+```
+will expand into
+```rust
+struct Struct {
+    /// Doc comment.
+    a: f64,
+}
+
+impl Struct {
+    /// Doc comment.
+    #[inline]
+    pub fn set_a(&mut self, value: f64) -> &mut Self {
+        self.a = value;
+        self
+    }
+}
+```
+
+### 12. `set_own`
+
+Derives an owning setter for a field.
+
+#### Parameters
+- `name` — name of the resulting method. If not set, it will be named as `set_field`.
+- `vis` — visibility of the resulting method. If not set, it will be private.
+
+#### Example
+
+```rust
+use gset::Getset;
+
+#[derive(Getset)]
+struct Struct {
+    /// Doc comment.
+    #[getset(set_own, vis = "pub")]
+    a: f64,
+}
+```
+will expand into
+```rust
+struct Struct {
+    /// Doc comment.
+    a: f64,
+}
+
+impl Struct {
+    /// Doc comment.
+    #[inline]
+    pub fn set_a(mut self, value: f64) -> Self {
+        self.a = value;
+        self
     }
 }
 ```

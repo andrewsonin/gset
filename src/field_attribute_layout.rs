@@ -229,6 +229,22 @@ impl AttributeLayout {
                     get_ty_override().unwrap_or_else(|| quote! { () }),
                 )
             }
+            AttributeKind::SetBorrowed => {
+                let fn_name = setter_fn_name();
+                (
+                    quote! { #fn_name(&mut self, value: #field_type) },
+                    quote! { self.#field_ident_or_idx = value; self },
+                    get_ty_override().unwrap_or_else(|| quote! { &mut Self }),
+                )
+            }
+            AttributeKind::SetOwned => {
+                let fn_name = setter_fn_name();
+                (
+                    quote! { #fn_name(mut self, value: #field_type) },
+                    quote! { self.#field_ident_or_idx = value; self },
+                    get_ty_override().unwrap_or_else(|| quote! { Self }),
+                )
+            }
         };
         quote! {
             #visibility fn #signature -> #ty {

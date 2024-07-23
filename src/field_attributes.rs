@@ -68,6 +68,8 @@ define_field_attributes!(
         GetAsRef      => "get_as_ref",
         GetAsDeref    => "get_as_deref",
         GetAsDerefMut => "get_as_deref_mut",
-        Set           => "set"
+        Set           => "set",
+        SetBorrowed   => "set_borrow",
+        SetOwned      => "set_own"
     }
 );

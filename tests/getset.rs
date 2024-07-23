@@ -8,7 +8,7 @@ use std::{
 };
 
 #[derive(Getset)]
-struct Struct1<T, M: Default>
+struct Struct1<'a, T, M: Default>
 where
     T: Debug,
 {
@@ -43,6 +43,12 @@ where
         ty = "Option<&mut f64>"
     )]
     field_5: Option<F64>,
+
+    /// Field 6.
+    #[getset(set, name = "set_field_6")]
+    #[getset(set_borrow, name = "set_field_6_borrow")]
+    #[getset(set_own, name = "set_field_6_own")]
+    field_6: &'a f64,
 }
 
 #[derive(Getset)]
